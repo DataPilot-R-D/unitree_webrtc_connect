@@ -19,8 +19,8 @@ Python WebRTC driver for Unitree Go2 and G1 robots. Provides high-level control 
 
 | Robot | Firmware Versions | Auth |
 |-------|-------------------|------|
-| **Go2** | 1.1.1 – 1.1.14 *(latest)*, 1.0.19 – 1.0.25 | static GCM key (`data2=2`) |
-| **G1** | 1.2.0 – 1.4.5<br>1.5.1+ *(latest)* | static GCM key (`data2=2`)<br>per-device AES-128 key (`data2=3`) — see [G1 ≥ 1.5.1 — AES-128 Key](#g1--151--aes-128-key-data23) |
+| **Go2** | 1.0.19 – 1.0.25<br>1.1.1 – 1.1.14<br>1.1.15+ *(latest)* | static GCM key (`data2=2`)<br>static GCM key (`data2=2`)<br>per-device AES-128 key (`data2=3`) — see [AES-128 Key](#aes-128-key-data23-g1--151--go2--1115) |
+| **G1** | 1.2.0 – 1.4.5<br>1.5.1+ *(latest)* | static GCM key (`data2=2`)<br>per-device AES-128 key (`data2=3`) — see [AES-128 Key](#aes-128-key-data23-g1--151--go2--1115) |
 
 ## Features
 
@@ -35,7 +35,7 @@ Python WebRTC driver for Unitree Go2 and G1 robots. Provides high-level control 
 | AudioHub (audio file management) | yes | — |
 | Obstacle avoidance API | yes | — |
 | Multicast device discovery | yes | — |
-| `data2=3` per-device key auth | — | yes (G1 ≥ 1.5.1) |
+| `data2=3` per-device key auth | yes (Go2 ≥ 1.1.15) | yes (G1 ≥ 1.5.1) |
 
 ## Installation
 
@@ -62,12 +62,12 @@ pip install -e .
 ```python
 from unitree_webrtc_connect import UnitreeWebRTCConnection, WebRTCConnectionMethod
 
-# Go2 / older G1 firmware — no extra auth needed
+# Legacy firmware (Go2 < 1.1.15, G1 < 1.5.1) — no extra auth needed
 conn = UnitreeWebRTCConnection(WebRTCConnectionMethod.LocalSTA, ip="192.168.123.18")
 await conn.connect()
 
-# G1 firmware ≥ 1.5.1 — per-device AES-128 key required for the LAN handshake
-# (see "G1 ≥ 1.5.1 — AES-128 Key" below for how to fetch it)
+# V3-capable firmware (G1 ≥ 1.5.1, Go2 ≥ 1.1.15) — per-device AES-128 key
+# required for the LAN handshake (see "AES-128 Key" below for how to fetch it)
 conn = UnitreeWebRTCConnection(
     WebRTCConnectionMethod.LocalSTA,
     ip="192.168.10.225",
@@ -84,7 +84,7 @@ Robot is in Access Point mode, client connects directly to the robot's WiFi.
 ```python
 UnitreeWebRTCConnection(WebRTCConnectionMethod.LocalAP)
 
-# G1 ≥ 1.5.1 in AP mode
+# V3-capable firmware (G1 ≥ 1.5.1, Go2 ≥ 1.1.15) in AP mode
 UnitreeWebRTCConnection(
     WebRTCConnectionMethod.LocalAP,
     aes_128_key="<32-hex-chars>",
@@ -101,7 +101,7 @@ UnitreeWebRTCConnection(WebRTCConnectionMethod.LocalSTA, ip="192.168.8.181")
 # By serial number (uses multicast discovery, Go2 only)
 UnitreeWebRTCConnection(WebRTCConnectionMethod.LocalSTA, serialNumber="B42D2000XXXXXXXX")
 
-# G1 ≥ 1.5.1 by IP, with per-device key
+# V3-capable firmware (G1 ≥ 1.5.1, Go2 ≥ 1.1.15) by IP, with per-device key
 UnitreeWebRTCConnection(
     WebRTCConnectionMethod.LocalSTA,
     ip="192.168.10.225",
@@ -134,9 +134,9 @@ UnitreeWebRTCConnection(
 )
 ```
 
-## G1 ≥ 1.5.1 — AES-128 Key (`data2=3`)
+## AES-128 Key (`data2=3`, G1 ≥ 1.5.1 / Go2 ≥ 1.1.15)
 
-Starting with G1 firmware **1.5.1**, the LAN signaling handshake (`con_notify`) returns `data2=3`, which means the embedded RSA public key is wrapped under a **per-device AES-128-GCM key**. Without that key the WebRTC handshake can't decrypt the public key and the connection never starts. (Older firmware uses a static AES-GCM key — handled automatically.)
+Starting with G1 firmware **1.5.1** (back-ported to Go2 firmware **1.1.15**), the LAN signaling handshake (`con_notify`) returns `data2=3`, which means the embedded RSA public key is wrapped under a **per-device AES-128-GCM key**. Without that key the WebRTC handshake can't decrypt the public key and the connection never starts. (Older firmware — G1 < 1.5.1 / Go2 < 1.1.15 — uses a static AES-GCM key, handled automatically.)
 
 The key is **per device**, **stable across re-pairings**, stored on the robot at `/unitree/etc/key/aes_key.bin` (RSA-wrapped), and surfaced to the cloud as `dev.key` in `device/bind/list`.
 
@@ -145,8 +145,12 @@ The key is **per device**, **stable across re-pairings**, stored on the robot at
 After `pip install unitree_webrtc_connect` you get a console script:
 
 ```sh
-# By default: region=global, device family=G1 — fits most users.
+# By default: region=global, device family=G1.
+# Use --device-type Go2 for Unitree Go2 (≥ 1.1.15).
 unitree-fetch-aes-key --email you@example.com --password '...'
+
+# Go2 in global region:
+unitree-fetch-aes-key --email you@example.com --password '...' --device-type Go2
 
 # China region:
 unitree-fetch-aes-key --email you@example.com --password '...' --region cn
@@ -218,8 +222,8 @@ export UNITREE_ROBOT_IP=192.168.8.181
 python examples/go2/data_channel/sportmode/sportmode.py
 ```
 
-For G1 examples, also set `UNITREE_AES_128_KEY` (fetch via
-`unitree-fetch-aes-key`) on firmware ≥ 1.5.1.
+On V3-capable firmware (G1 ≥ 1.5.1, Go2 ≥ 1.1.15), also set
+`UNITREE_AES_128_KEY` (fetch via `unitree-fetch-aes-key`).
 
 ### Go2
 
@@ -245,7 +249,7 @@ For G1 examples, also set `UNITREE_AES_128_KEY` (fetch via
 | Category | Example | Description |
 |----------|---------|-------------|
 | **Data Channel** | `data_channel/sport_mode/` | Sport mode movement commands |
-| **Video** | `video/camera_stream/` | Display video stream (requires AES-128 key on firmware ≥ 1.5.1) |
+| **Video** | `video/camera_stream/` | Display video stream |
 
 ## Imports
 

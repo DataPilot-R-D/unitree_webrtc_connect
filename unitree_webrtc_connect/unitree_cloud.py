@@ -200,7 +200,8 @@ class UnitreeCloud:
 
     def list_devices(self) -> list[RobotDevice]:
         """`device/bind/list` — returns every robot bound to the account.
-        On V3 firmware (G1 ≥ 1.5.1) the AES-128 key is in `dev.key`."""
+        On V3-capable firmware (G1 ≥ 1.5.1, Go2 ≥ 1.1.15) the per-device
+        AES-128 key is in `dev.key`."""
         result = self._request("GET", "device/bind/list")
         data = self._check(result, "device/bind/list") or []
         return [RobotDevice.from_dict(d) for d in data]
@@ -266,8 +267,8 @@ def fetch_aes_key(email: str, password: str, sn: str,
                 raise UnitreeCloudError(
                     "fetch_aes_key", 0,
                     f"Device {sn} is bound but the cloud returned an empty "
-                    f"`dev.key`. Check the firmware version (V3 / G1 ≥ 1.5.1 "
-                    f"is required).",
+                    f"`dev.key`. Check the firmware version (data2=3 / V3 "
+                    f"is required — G1 ≥ 1.5.1 or Go2 ≥ 1.1.15).",
                 )
             return d.key
     raise UnitreeCloudError(

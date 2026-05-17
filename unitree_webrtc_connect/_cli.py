@@ -1,6 +1,7 @@
 """
 CLI for fetching the per-device AES-128 key (`dev.key` from the Unitree
-cloud, required for the LAN data2=3 handshake on G1 firmware ≥ 1.5.1).
+cloud, required for the LAN data2=3 handshake on G1 firmware ≥ 1.5.1
+and Go2 firmware ≥ 1.1.15).
 
 Registered as the `unitree-fetch-aes-key` console script in pyproject
 once the package is pip-installed. Also runnable as
@@ -87,8 +88,8 @@ def _parse_args(argv) -> argparse.Namespace:
     p = argparse.ArgumentParser(
         prog="unitree-fetch-aes-key",
         description=(
-            "Fetch the per-device AES-128 key (data2=3, G1 ≥ 1.5.1) "
-            "from the Unitree cloud."
+            "Fetch the per-device AES-128 key (data2=3, required on "
+            "G1 ≥ 1.5.1 and Go2 ≥ 1.1.15) from the Unitree cloud."
         ),
         epilog=(
             "Examples:\n"
@@ -164,7 +165,9 @@ def main(argv=None) -> int:
                 if not d.key:
                     _fail(
                         f"SN {d.sn} is bound but `dev.key` is empty — "
-                        f"firmware is probably < 1.5.1 (no data2=3 needed)."
+                        f"firmware is probably below the data2=3 cutover "
+                        f"(G1 < 1.5.1 / Go2 < 1.1.15), in which case no "
+                        f"per-device key is needed."
                     )
                     return 1
                 if args.quiet:

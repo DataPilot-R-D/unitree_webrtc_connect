@@ -33,10 +33,11 @@ class UnitreeWebRTCConnection:
         device_type: str = "Go2",
     ) -> None:
         """`aes_128_key` is the per-device 16-byte key (32 hex chars) the
-        cloud returns as `dev.key` in `device/bind/list`. Required on G1
-        firmware ≥ 1.5.1 for the LAN flow (con_notify returns
-        `data2 === 3`); ignored on older firmware. Fetch it via
-        `examples/fetch_aes_key.py` once per robot and cache locally.
+        cloud returns as `dev.key` in `device/bind/list`. Required on
+        G1 firmware ≥ 1.5.1 and Go2 firmware ≥ 1.1.15 for the LAN flow
+        (con_notify returns `data2 === 3`); ignored on older firmware.
+        Fetch it via `examples/fetch_aes_key.py` once per robot and
+        cache locally.
 
         `region` (`"global"`/`"cn"`) and `device_type` (`"Go2"`/`"G1"`)
         select the correct cloud endpoint + AppName header for the

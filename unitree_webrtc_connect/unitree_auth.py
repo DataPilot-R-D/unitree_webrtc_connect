@@ -28,7 +28,7 @@ from .encryption import (
 from .unitree_cloud import UnitreeCloud, UnitreeCloudError
 
 
-# Static AES-GCM key used for `data2 === 2` (legacy Go2 / G1 < 1.5.1).
+# Static AES-GCM key used for `data2 === 2` (Go2 < 1.1.15, G1 < 1.5.1).
 # Matches `AESGCMUtil.keyBytes` in the Unitree apk.
 _LEGACY_GCM_KEY = bytes(
     [232, 86, 130, 189, 22, 84, 155, 0, 142, 4, 166, 104, 43, 179, 235, 227]
@@ -42,8 +42,9 @@ class AesKeyRequiredError(RuntimeError):
 
     def __init__(self):
         super().__init__(
-            "This robot speaks data2=3 (G1 ≥ 1.5.1) — the per-device "
-            "AES-128 key is required to decrypt the LAN handshake.\n"
+            "This robot speaks data2=3 (G1 ≥ 1.5.1 / Go2 ≥ 1.1.15) — the "
+            "per-device AES-128 key is required to decrypt the LAN "
+            "handshake.\n"
             "Pass `aes_128_key=...` (32 hex chars) to UnitreeWebRTCConnection.\n"
             "Fetch it via `examples/fetch_aes_key.py` or "
             "`UnitreeCloud.list_devices()`."
@@ -262,7 +263,8 @@ def send_sdp_to_local_peer(ip, sdp, aes_128_key: str = None):
 
         :9991 (con_notify)  —  newer firmware, all G1, post-1.1.11 Go2.
                                 Uses `aes_128_key` when the robot replies
-                                with `data2 === 3` (G1 ≥ 1.5.1).
+                                with `data2 === 3` (G1 ≥ 1.5.1,
+                                Go2 ≥ 1.1.15).
         :8081 (offer)        —  legacy Go2 firmware (pre-1.1.11).
 
     Raises `LocalSignalingPortError` if neither port is reachable."""
